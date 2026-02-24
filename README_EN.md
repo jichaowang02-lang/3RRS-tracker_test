@@ -1,6 +1,11 @@
 # 3RRS Parallel Platform Solar Tracking System
 
-A solar tracking system based on a **3-RRS parallel mechanism**. MATLAB handles kinematics simulation and control command generation, which are transmitted via serial port to an STM32F103 microcontroller, driving a PCA9685 servo driver board to control three servos.
+![MATLAB Simulation](images/matlab_sim.png)
+
+A solar tracking system based on a **3-RRS parallel mechanism**. MATLAB handles kinematics simulation and control command generation, transmitted via serial port to an STM32F103 microcontroller, driving a PCA9685 servo driver board to control three servos.
+
+> **Follow-up Project**: This repository is an early validation version (STM32 + MATLAB). The full implementation running entirely on **Raspberry Pi 5** — including real-time vision tracking and motion control — is available here:
+> 👉 [Real-Time-Stewart-Solar-Tracker / Solar-Stewart-Tracker](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)
 
 ---
 
@@ -43,7 +48,10 @@ tracker_MATLAB_STM32/
 │       └── i2c.c
 ├── MDK-ARM/
 │   └── testmotor.uvprojx   # Keil MDK project file
-└── Drivers/                # STM32 HAL library
+├── images/
+│   ├── matlab_sim.png  # MATLAB simulation screenshot
+│   └── hardware.jpg    # Physical prototype photo
+└── Drivers/            # STM32 HAL library
 ```
 
 ---
@@ -86,7 +94,6 @@ S1:090   ← Servo 1, 90°
 S2:045   ← Servo 2, 45°
 S3:120   ← Servo 3, 120°
 ```
-Each command is terminated with `\n`. Angle is always zero-padded to 3 digits.
 
 ---
 
@@ -98,11 +105,6 @@ Each command is terminated with `\n`. Angle is always zero-padded to 3 digits.
 | USART1 | 115200 baud, 8N1 |
 | I2C1 | Connected to PCA9685 (address 0x40) |
 | PCA9685 PWM | 50Hz, channels 0/1/2 → servo 1/2/3 |
-
-### Command Parsing (`usart.c`)
-- Byte-by-byte interrupt reception; parses on `\n` or `\r`
-- Format validation: `S[1-3]:[0-9]{3}`
-- Calls `OnServoCommand(id, angle)` to drive the corresponding servo
 
 ### PCA9685 Driver (`pca9685.c`)
 - `PCA9685_Init50Hz()` — Initialize at 50Hz PWM
@@ -117,22 +119,19 @@ Each command is terminated with `\n`. Angle is always zero-padded to 3 digits.
 ```matlab
 run('sun.m')
 ```
-Move the mouse in the Control Pad window to see the 3RRS mechanism follow.
 
 ### 2. With Hardware
 1. Build and flash the STM32 firmware (`MDK-ARM/testmotor.uvprojx` in Keil)
-2. Connect the STM32 USB-serial adapter and note the COM port
-3. Edit `sun211.m` (or leave blank for auto-detection):
+2. Edit `sun211.m`:
    ```matlab
    portPref = "COM5";  % Set your actual COM port, or "" for auto
    ```
-4. Run in MATLAB:
+3. Run in MATLAB:
    ```matlab
    run('sun211.m')
    ```
 
 ### 3. Servo Calibration
-If servos don't center correctly, adjust the mapping in `sun211.m`:
 ```matlab
 servoOffset = [90 90 90];   % Neutral angle for each servo
 servoDir    = [-1 -1 -1];   % Direction: 1 or -1
@@ -150,10 +149,19 @@ servoDir    = [-1 -1 -1];   % Direction: 1 or -1
 
 ---
 
-## PID Tuning Reference
+## Follow-up Project
 
-```matlab
-Kp = 0.02;   % Proportional: increase for faster response
-Ki = 0;      % Integral: keep at 0 for most cases
-Kd = 0;      % Derivative: increase slightly to reduce oscillation
-```
+This repository represents the early validation stage, where MATLAB on a PC performs kinematics solving and sends commands to servos via STM32.
+
+The system was subsequently migrated entirely to **Raspberry Pi 5**, featuring:
+- Real-time red light source tracking with OpenCV (CSI camera)
+- Full kinematics solving and PID control running on the Pi
+- Direct PCA9685 servo control — no STM32 intermediate layer
+
+👉 **Full implementation**: [Real-Time-Stewart-Solar-Tracker / Solar-Stewart-Tracker](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)
+
+---
+
+## Hardware
+
+![3RRS Parallel Platform Prototype](images/hardware.jpg)

@@ -1,6 +1,11 @@
 # 3RRS 并联平台太阳追踪系统
 
-基于 3-RRS 并联机构的太阳追踪控制系统，通过 MATLAB 进行运动学仿真与控制指令生成，经串口传至 STM32F103，驱动 PCA9685 舵机驱动板控制三路舵机。
+![MATLAB 仿真界面](images/matlab_sim.png)
+
+基于 3-RRS 并联机构的太阳追踪控制系统。MATLAB 负责运动学仿真与控制指令生成，经串口传至 STM32F103，驱动 PCA9685 舵机驱动板控制三路舵机。
+
+> **后续完整项目**：本仓库为早期验证版本（STM32 + MATLAB）。完整的基于 **Raspberry Pi 5** 的实现版本（视觉检测与运动控制全部在树莓派上运行）请访问：
+> 👉 [Real-Time-Stewart-Solar-Tracker / Solar-Stewart-Tracker](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)
 
 ---
 
@@ -33,7 +38,6 @@ tracker_MATLAB_STM32/
 ├── testmotor.ioc       # STM32CubeMX 配置文件
 ├── Core/
 │   ├── Inc/
-│   │   ├── main.h
 │   │   ├── pca9685.h   # PCA9685 驱动接口声明
 │   │   ├── usart.h
 │   │   └── i2c.h
@@ -44,7 +48,10 @@ tracker_MATLAB_STM32/
 │       └── i2c.c
 ├── MDK-ARM/
 │   └── testmotor.uvprojx   # Keil MDK 工程文件
-└── Drivers/                # STM32 HAL 库
+├── images/
+│   ├── matlab_sim.png  # MATLAB 仿真界面截图
+│   └── hardware.jpg    # 实物照片
+└── Drivers/            # STM32 HAL 库
 ```
 
 ---
@@ -87,7 +94,6 @@ S1:090   ← 舵机1，90°
 S2:045   ← 舵机2，45°
 S3:120   ← 舵机3，120°
 ```
-每条指令以 `\n` 结尾，角度固定三位数字格式。
 
 ---
 
@@ -100,11 +106,6 @@ S3:120   ← 舵机3，120°
 | I2C1 | 连接 PCA9685（地址 0x40）|
 | PCA9685 PWM | 50Hz，通道 0/1/2 对应舵机 1/2/3 |
 
-### 串口指令解析（`usart.c`）
-- 中断逐字接收，遇 `\n` 或 `\r` 触发解析
-- 格式校验：`S[1-3]:[0-9]{3}`
-- 调用 `OnServoCommand(id, angle)` 驱动对应舵机
-
 ### PCA9685 驱动（`pca9685.c`）
 - `PCA9685_Init50Hz()` — 初始化为 50Hz PWM
 - `PCA9685_ServoWriteDeg(addr, ch, deg)` — 角度转脉宽输出
@@ -116,25 +117,21 @@ S3:120   ← 舵机3，120°
 
 ### 1. 运行纯仿真（无需硬件）
 ```matlab
-% 在 MATLAB 中运行
 run('sun.m')
 ```
-移动鼠标至"控制垫"窗口即可观察 3RRS 机构跟随运动。
 
 ### 2. 连接硬件运行
-1. 将 STM32 固件编译烧录（Keil 工程：`MDK-ARM/testmotor.uvprojx`）
-2. 连接 STM32 USB 串口，确认 COM 口号
-3. 修改 `sun211.m` 中的串口配置（或留空自动检测）：
+1. 烧录 STM32 固件（Keil 工程：`MDK-ARM/testmotor.uvprojx`）
+2. 修改 `sun211.m` 中的串口配置：
    ```matlab
    portPref = "COM5";  % 填入实际 COM 口，留空则自动选择
    ```
-4. 在 MATLAB 中运行：
+3. 在 MATLAB 中运行：
    ```matlab
    run('sun211.m')
    ```
 
-### 3. 舵机角度调零
-若舵机初始位置不正确，调节 `sun211.m` 中的映射参数：
+### 3. 舵机调零
 ```matlab
 servoOffset = [90 90 90];   % 各舵机中位角度
 servoDir    = [-1 -1 -1];   % 方向：1 或 -1
@@ -152,10 +149,19 @@ servoDir    = [-1 -1 -1];   % 方向：1 或 -1
 
 ---
 
-## PID 参数调节参考
+## 后续项目
 
-```matlab
-Kp = 0.02;   % 比例项，增大可加快响应速度
-Ki = 0;      % 积分项，一般保持 0
-Kd = 0;      % 微分项，可适当增大以减少震荡
-```
+本仓库为项目的早期验证阶段，使用 PC 端 MATLAB 完成运动学解算并通过 STM32 控制舵机。
+
+后续我们将系统完整迁移至 **Raspberry Pi 5**，实现：
+- 基于 OpenCV 的红色光源实时视觉追踪（CSI 摄像头）
+- 运动学解算与 PID 控制全部在树莓派上运行
+- 通过 PCA9685 直接驱动舵机，无需 STM32 中间层
+
+👉 **完整版仓库**：[Real-Time-Stewart-Solar-Tracker / Solar-Stewart-Tracker](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)
+
+---
+
+## 实物照片
+
+![3RRS 并联平台实物](images/hardware.jpg)
