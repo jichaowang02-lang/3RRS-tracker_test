@@ -1,0 +1,27 @@
+--cpu Cortex-M3
+"testmotor\startup_stm32f103xb.o"
+"testmotor\pca9685.o"
+"testmotor\main.o"
+"testmotor\gpio.o"
+"testmotor\i2c.o"
+"testmotor\usart.o"
+"testmotor\stm32f1xx_it.o"
+"testmotor\stm32f1xx_hal_msp.o"
+"testmotor\stm32f1xx_hal_gpio_ex.o"
+"testmotor\stm32f1xx_hal_i2c.o"
+"testmotor\stm32f1xx_hal.o"
+"testmotor\stm32f1xx_hal_rcc.o"
+"testmotor\stm32f1xx_hal_rcc_ex.o"
+"testmotor\stm32f1xx_hal_gpio.o"
+"testmotor\stm32f1xx_hal_dma.o"
+"testmotor\stm32f1xx_hal_cortex.o"
+"testmotor\stm32f1xx_hal_pwr.o"
+"testmotor\stm32f1xx_hal_flash.o"
+"testmotor\stm32f1xx_hal_flash_ex.o"
+"testmotor\stm32f1xx_hal_exti.o"
+"testmotor\stm32f1xx_hal_uart.o"
+"testmotor\system_stm32f1xx.o"
+--strict --scatter "testmotor\testmotor.sct"
+--summary_stderr --info summarysizes --map --load_addr_map_info --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list "testmotor.map" -o testmotor\testmotor.axf

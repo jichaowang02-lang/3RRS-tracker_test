@@ -1,0 +1,83 @@
+#include "pca9685.h"
+
+#define PCA9685_MODE1       0x00
+#define PCA9685_PRESCALE    0xFE
+#define PCA9685_LED0_ON_L   0x06
+
+static HAL_StatusTypeDef pca_write8(PCA9685_t *dev, uint8_t reg, uint8_t val)
+{
+    return HAL_I2C_Mem_Write(dev->hi2c, (uint16_t)(dev->addr7 << 1),
+                             reg, I2C_MEMADD_SIZE_8BIT, &val, 1, 100);
+}
+
+static HAL_StatusTypeDef pca_read8(PCA9685_t *dev, uint8_t reg, uint8_t *val)
+{
+    return HAL_I2C_Mem_Read(dev->hi2c, (uint16_t)(dev->addr7 << 1),
+                            reg, I2C_MEMADD_SIZE_8BIT, val, 1, 100);
+}
+
+HAL_StatusTypeDef PCA9685_SetPWM(PCA9685_t *dev, uint8_t channel, uint16_t on, uint16_t off)
+{
+    if (channel > 15) return HAL_ERROR;
+    if (on > 4095) on = 4095;
+    if (off > 4095) off = 4095;
+
+    uint8_t reg = (uint8_t)(PCA9685_LED0_ON_L + 4 * channel);
+    uint8_t data[4];
+    data[0] = (uint8_t)(on & 0xFF);
+    data[1] = (uint8_t)((on >> 8) & 0x0F);
+    data[2] = (uint8_t)(off & 0xFF);
+    data[3] = (uint8_t)((off >> 8) & 0x0F);
+
+    return HAL_I2C_Mem_Write(dev->hi2c, (uint16_t)(dev->addr7 << 1),
+                             reg, I2C_MEMADD_SIZE_8BIT, data, 4, 100);
+}
+
+HAL_StatusTypeDef PCA9685_Init(PCA9685_t *dev, I2C_HandleTypeDef *hi2c, uint8_t addr7, float freq_hz)
+{
+    dev->hi2c = hi2c;
+    dev->addr7 = addr7;
+    dev->freq_hz = freq_hz;
+
+    // read MODE1
+    uint8_t oldmode = 0;
+    if (pca_read8(dev, PCA9685_MODE1, &oldmode) != HAL_OK) return HAL_ERROR;
+
+    // calc prescale = round(25MHz / (4096*freq)) - 1
+    float prescale_f = (25000000.0f / (4096.0f * freq_hz)) - 1.0f;
+    uint8_t prescale = (uint8_t)(prescale_f + 0.5f);
+
+    // go to sleep to set prescale
+    uint8_t sleepmode = (uint8_t)((oldmode & 0x7F) | 0x10); // SLEEP=1
+    if (pca_write8(dev, PCA9685_MODE1, sleepmode) != HAL_OK) return HAL_ERROR;
+
+    // write prescale
+    if (pca_write8(dev, PCA9685_PRESCALE, prescale) != HAL_OK) return HAL_ERROR;
+
+    // wake up
+    if (pca_write8(dev, PCA9685_MODE1, oldmode) != HAL_OK) return HAL_ERROR;
+    HAL_Delay(1);
+
+    // enable auto-increment (AI=1), normal mode
+    uint8_t aimode = (uint8_t)(oldmode | 0x20);
+    if (pca_write8(dev, PCA9685_MODE1, aimode) != HAL_OK) return HAL_ERROR;
+
+    return HAL_OK;
+}
+
+// Servo mapping: 0~180 -> 500~2500us (you can calibrate)
+// 50Hz period=20000us, 4096 ticks
+HAL_StatusTypeDef PCA9685_SetServoAngle(PCA9685_t *dev, uint8_t channel, float angle_deg)
+{
+    if (angle_deg < 0) angle_deg = 0;
+    if (angle_deg > 180) angle_deg = 180;
+
+    float us_min = 500.0f;
+    float us_max = 2500.0f;
+    float us = us_min + (angle_deg / 180.0f) * (us_max - us_min);
+
+    uint16_t off = (uint16_t)(us * 4096.0f / 20000.0f + 0.5f);
+    if (off > 4095) off = 4095;
+
+    return PCA9685_SetPWM(dev, channel, 0, off);
+}
