@@ -162,6 +162,18 @@ The system was subsequently migrated entirely to **Raspberry Pi 5**, featuring:
 
 ---
 
-## Hardware
+## Hardware & Testing
 
 ![3RRS Parallel Platform Prototype](images/hardware.jpg)
+
+### Demo Video
+
+<video src="images/rrs_test_demo.mp4" controls width="100%"></video>
+
+> If the video doesn't play inline, [click here to download and watch](images/rrs_test_demo.mp4).
+
+### Raspberry Pi 5 Version — Fully Assembled & Tested ✅
+
+The complete system has been successfully assembled and tested on **Raspberry Pi 5**, achieving closed-loop real-time solar tracking using a CSI camera and OpenCV. All computation — visual detection, IK solving, PID control, and servo driving — runs independently on the Pi, with no PC or STM32 required.
+
+👉 [Solar-Stewart-Tracker — Full Implementation](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)

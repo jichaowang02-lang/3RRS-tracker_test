@@ -162,6 +162,18 @@ servoDir    = [-1 -1 -1];   % 方向：1 或 -1
 
 ---
 
-## 实物照片
+## 实物与测试
 
 ![3RRS 并联平台实物](images/hardware.jpg)
+
+### 测试视频
+
+<video src="images/rrs_test_demo.mp4" controls width="100%"></video>
+
+> 如视频无法直接播放，请[点击下载观看](images/rrs_test_demo.mp4)。
+
+### 树莓派 5 完整版已装配并测试 ✅
+
+完整版系统已在 **Raspberry Pi 5** 上完成装配与实机测试，实现了基于 CSI 摄像头 + OpenCV 的红色光源实时追踪闭环控制。所有运算（视觉检测、IK 解算、PID 控制、舵机驱动）均在树莓派上独立运行，无需 PC 或 STM32 参与。
+
+👉 [Solar-Stewart-Tracker 完整版仓库](https://github.com/Real-Time-Stewart-Solar-Tracker/Solar-Stewart-Tracker)
